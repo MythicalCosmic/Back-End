@@ -123,3 +123,10 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:8080/',
+    'http://192.168.0.191:8080/',
+    'https://back-end-kde2.onrender.com',
+    'http://192.168.100.0:8080/'
+]
+CSRF_TRUSTED_ORIGINS = ['https://back-end-kde2.onrender.com']
