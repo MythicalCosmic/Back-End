@@ -120,6 +120,7 @@ USE_TZ = True
 STATIC_URL = 'static/'
 
 # Default primary key field type
+from datetime import timedelta
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=3),
