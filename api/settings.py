@@ -142,3 +142,5 @@ CORS_ALLOWED_ORIGINS = [
     'https://api-pharm.onrender.com',
     'http://192.168.100.0:8080'
 ]
+
+CSRF_TRUSTED_ORIGINS = ['https://back-end-kde2.onrender.com']
