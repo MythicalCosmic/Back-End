@@ -134,9 +134,11 @@ SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=3),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
 }
+
+
 CORS_ALLOWED_ORIGINS = [
-    'http://localhost:8080/',
-    'http://192.168.0.191:8080/',
+    'http://localhost:8080',
+    'http://192.168.0.191:8080',
     'https://api-pharm.onrender.com',
-    'http://192.168.100.0:8080/'
+    'http://192.168.100.0:8080'
 ]
