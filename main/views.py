@@ -1,8 +1,9 @@
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, parser_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.response import Response
 from django.contrib.auth import authenticate, logout
+from rest_framework.parsers import MultiPartParser, FormParser
 from .serializers import *
 from rest_framework import status
 from .models import *
@@ -50,13 +51,18 @@ def allProducts(request):
     serializer = ProductSerializer(products, many=True, context={'request': request})
     return Response(serializer.data)
 
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
+@parser_classes([MultiPartParser, FormParser])
 def createProduct(request):
+    print("Request data:", request.data)
+    print("Files:", request.FILES)
     serializer = ProductSerializer(data=request.data)
     if serializer.is_valid():
         instance = serializer.save()
         return Response(ProductSerializer(instance).data, status=status.HTTP_201_CREATED)
+    print("Errors:", serializer.errors)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['DELETE'])
