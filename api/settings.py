@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-gqgk7s9nbt7-)u2_s2+$8c%^@jcs%(e!o$+5p^%p%o8hgq!#k2
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['back-end-kde2.onrender.com']
 
 
 # Application definition
@@ -159,3 +159,11 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
     'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
 }
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:8080',
+    'http://192.168.0.191:8080',
+    'https://api-pharm.onrender.com',
+    'http://192.168.100.0:8080'
+]
+
+CSRF_TRUSTED_ORIGINS = ['https://back-end-kde2.onrender.com']
