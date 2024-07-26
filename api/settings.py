@@ -162,7 +162,7 @@ SIMPLE_JWT = {
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:8080',
     'http://192.168.0.191:8080',
-    'https://api-pharm.onrender.com',
+    'https://willowy-zabaione-25f5b5.netlify.app',
     'http://192.168.100.0:8080'
 ]
 
