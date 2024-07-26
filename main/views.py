@@ -8,6 +8,7 @@ from .serializers import *
 from rest_framework import status
 from .models import *
 from rest_framework.exceptions import AuthenticationFailed
+from .decorators import *
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -45,6 +46,7 @@ def logout_view(request):
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
+@has_role(['admin', 'editor'])
 @permission_classes([IsAuthenticated])
 def allProducts(request):
     products = Product.objects.all()
@@ -53,6 +55,7 @@ def allProducts(request):
 
 
 @api_view(['POST'])
+@has_role(['admin', 'editor'])
 @permission_classes([IsAuthenticated])
 @parser_classes([MultiPartParser, FormParser])
 def createProduct(request):
@@ -66,6 +69,7 @@ def createProduct(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['DELETE'])
+@has_role(['admin', 'editor'])
 @permission_classes([IsAuthenticated])
 def deleteProduct(request, pk):
     try:
@@ -76,6 +80,7 @@ def deleteProduct(request, pk):
     return Response({'success': 'Product deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
 
 @api_view(['PUT'])
+@has_role(['admin', 'editor'])
 @permission_classes([IsAuthenticated])
 def updateProduct(request, pk):
     try:
@@ -90,6 +95,7 @@ def updateProduct(request, pk):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
+@has_role(['admin', 'editor'])
 @permission_classes([IsAuthenticated])
 def allCategory(request):
     categories = Category.objects.all()
@@ -97,6 +103,7 @@ def allCategory(request):
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 @api_view(['POST'])
+@has_role(['admin', 'editor'])
 @permission_classes([IsAuthenticated])
 def createCategory(request):
     serializer = CategorySerializer(data=request.data)
@@ -106,6 +113,7 @@ def createCategory(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['DELETE'])
+@has_role(['admin', 'editor'])
 @permission_classes([IsAuthenticated])
 def deleteCategory(request, pk):
     try:
@@ -116,6 +124,7 @@ def deleteCategory(request, pk):
     return Response({'success': 'Category deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
 
 @api_view(['PUT'])
+@has_role(['admin', 'editor'])
 @permission_classes([IsAuthenticated])
 def updateCategory(request, pk):
     try:
