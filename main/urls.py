@@ -12,4 +12,6 @@ urlpatterns = [
     path('api/category/create', createCategory, name='api-category-create'),
     path('api/category/delete/<int:pk>', deleteCategory, name='api-category-delete'),
     path('api/category/update/<int:pk>', updateCategory, name='api-category-update'),
+    path('api/products/restore/<int:pk>/', restoreProduct, name='restore-product'),
+    path('api/products/deleted', listDeletedProducts, name='list-deleted-products'),
 ]

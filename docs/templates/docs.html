@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Django Project Documentation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            background-color: #f9f9f9;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            width: 80%;
+            margin: auto;
+            overflow: hidden;
+        }
+        header {
+            background: #333;
+            color: #fff;
+            padding-top: 30px;
+            min-height: 70px;
+            border-bottom: #77abff 3px solid;
+        }
+        header h1 {
+            text-align: center;
+            margin: 0;
+        }
+        header a {
+            color: #fff;
+            text-decoration: none;
+            text-transform: uppercase;
+            font-size: 16px;
+        }
+        header ul {
+            padding: 0;
+            list-style: none;
+        }
+        header li {
+            display: inline;
+            padding: 0 20px 0 20px;
+        }
+        .content {
+            background: #fff;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1, h2, h3 {
+            color: #333;
+        }
+        pre {
+            background: #f4f4f4;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        code {
+            font-family: 'Courier New', Courier, monospace;
+        }
+        a {
+            color: #77abff;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1 style="color: white">Django Project Documentation</h1>
+        </div>
+    </header>
+    <div class="container content">
+        <h2>Overview</h2>
+        <p>This Django project provides a REST API for managing products, categories, and user authentication. It includes functionalities to create, update, delete, and restore products and categories. It also supports user login and logout using JWT tokens.</p>
+
+        <h2>Table of Contents</h2>
+        <ul>
+            <li><a href="#models">Models</a></li>
+            <li><a href="#serializers">Serializers</a></li>
+            <li><a href="#views">Views</a></li>
+            <li><a href="#urls">URLs</a></li>
+            <li><a href="#custom-decorators">Custom Decorators</a></li>
+            <li><a href="#settings">Settings</a></li>
+        </ul>
+
+        <h2 id="models">Models</h2>
+        <p>Models in Django are Python classes that define the structure of your database tables. Below are the models used in this project.</p>
+
+        <h3>Category</h3>
+        <p>The <code>Category</code> model represents product categories.</p>
+        <pre><code class="language-python">from django.db import models
+
+class Category(models.Model):
+    name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.name
+</code></pre>
+
+        <h3>Product</h3>
+        <p>The <code>Product</code> model represents individual products. Each product belongs to a category and can have an image associated with it.</p>
+        <pre><code class="language-python">from django.db import models
+
+class Product(models.Model):
+    name = models.CharField(max_length=100)
+    description = models.TextField()
+    price = models.IntegerField(default=0)
+    quantity = models.IntegerField(default=0)
+    category = models.ForeignKey(Category, on_delete=models.CASCADE)
+    photo = models.ImageField(upload_to='images/')
+
+    def __str__(self):
+        return self.name
+
+    def delete(self, *args, **kwargs):
+        DeletedProduct.objects.create(
+            original_id=self.id,
+            name=self.name,
+            description=self.description,
+            price=self.price,
+            quantity=self.quantity,
+            category=self.category,
+            photo=self.photo
+        )
+        super(Product, self).delete(*args, **kwargs)
+</code></pre>
+
+        <h3>DeletedProduct</h3>
+        <p>The <code>DeletedProduct</code> model stores information about deleted products, allowing them to be restored if necessary.</p>
+        <pre><code class="language-python">from django.db import models
+
+class DeletedProduct(models.Model):
+    original_id = models.IntegerField()
+    name = models.CharField(max_length=100)
+    description = models.TextField()
+    price = models.IntegerField(default=0)
+    quantity = models.IntegerField(default=0)
+    category = models.ForeignKey(Category, on_delete=models.CASCADE)
+    photo = models.ImageField(upload_to='deleted_images/')
+    deleted_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+</code></pre>
+
+        <h3>CustomUser</h3>
+        <p>The <code>CustomUser</code> model extends the default Django <code>AbstractUser</code> model to include additional fields such as email, full name, phone number, address, and role. The <code>email</code> field is used for authentication.</p>
+        <pre><code class="language-python">from django.db import models
+from django.contrib.auth.models import AbstractUser
+
+class CustomUser(AbstractUser):
+    email = models.EmailField(unique=True)
+    full_name = models.CharField(max_length=255, blank=True)
+    phone_number = models.CharField(max_length=20, blank=True)
+    address = models.TextField(blank=True)
+    role = models.CharField(max_length=50)
+
+    groups = models.ManyToManyField(
+        'auth.Group',
+        related_name='customuser_set',  # Updated related_name
+        blank=True,
+        help_text='The groups this user belongs to. A user will get all permissions granted to each of their groups.',
+        verbose_name='groups',
+    )
+    user_permissions = models.ManyToManyField(
+        'auth.Permission',
+        related_name='customuser_set',
+        blank=True,
+        help_text='Specific permissions for this user.',
+        verbose_name='user permissions',
+    )
+
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['username', 'full_name', 'phone_number', 'address', 'role']
+
+    def __str__(self):
+        return self.username
+</code></pre>
+
+        <h2 id="serializers">Serializers</h2>
+        <p>Serializers in Django REST Framework are used to convert complex data types, such as querysets and model instances, into native Python data types that can then be easily rendered into JSON, XML, or other content types. They also provide deserialization, allowing parsed data to be converted back into complex types.</p>
+
+        <h3>LoginSerializer</h3>
+        <p>The <code>LoginSerializer</code> handles the serialization of login data.</p>
+        <pre><code class="language-python">from rest_framework import serializers
+
+class LoginSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    password = serializers.CharField(write_only=True)
+</code></pre>
+
+        <h3>ProductSerializer</h3>
+        <p>The <code>ProductSerializer</code> handles the serialization of product data.</p>
+        <pre><code class="language-python">from rest_framework import serializers
+from .models import Product
+
+class ProductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        fields = ['id', 'name', 'description', 'price', 'quantity', 'photo', 'category']
+</code></pre>
+
+        <h3>DeletedProductSerializer</h3>
+        <p>The <code>DeletedProductSerializer</code> handles the serialization of deleted product data.</p>
+        <pre><code class="language-python">from rest_framework import serializers
+from .models import DeletedProduct
+
+class DeletedProductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DeletedProduct
+        fields = '__all__'
+</code></pre>
+
+        <h3>CategorySerializer</h3>
+        <p>The <code>CategorySerializer</code> handles the serialization of category data.</p>
+        <pre><code class="language-python">from rest_framework import serializers
+from .models import Category
+
+class CategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Category
+        fields = '__all__'
+</code></pre>
+
+        <h2 id="views">Views</h2>
+        <p>Views in Django are responsible for handling requests and returning responses. They interact with models and serializers to perform CRUD operations and other business logic.</p>
+
+        <h3>Login View</h3>
+        <p>The <code>login_view</code> handles user authentication and token generation using JWT.</p>
+        <pre><code class="language-python">from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.response import Response
+from rest_framework import status
+from django.contrib.auth import authenticate
+from .serializers import LoginSerializer
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def login_view(request):
+    serializer = LoginSerializer(data=request.data)
+    if serializer.is_valid():
+        email = serializer.validated_data['email']
+        password = serializer.validated_data['password']
+        user = authenticate(email=email, password=password)
+
+        if user is not None:
+            refresh = RefreshToken.for_user(user)
+            return Response({
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+            })
+        return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+</code></pre>
+
+        <h3>Logout View</h3>
+        <p>The <code>logout_view</code> handles user logout by blacklisting the provided refresh token.</p>
+        <pre><code class="language-python">from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.response import Response
+from rest_framework import status
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def logout_view(request):
+    try:
+        refresh_token = request.data['refresh']
+        token = RefreshToken(refresh_token)
+        token.blacklist()
+        return Response({'success': 'Logged out successfully'}, status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+</code></pre>
+
+        <h3>Product Views</h3>
+        <p>The following views handle various operations related to products, such as listing, creating, deleting, restoring, and updating products. They are protected by authentication and role-based access control.</p>
+
+        <h4>List All Products</h4>
+        <p>The <code>allProducts</code> view returns a list of all products in the database.</p>
+        <pre><code class="language-python">from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from .serializers import ProductSerializer
+from .models import Product
+from .decorators import has_role
+
+@api_view(['GET'])
+@has_role(['admin', 'editor'])
+@permission_classes([IsAuthenticated])
+def allProducts(request):
+    products = Product.objects.all()
+    serializer = ProductSerializer(products, many=True, context={'request': request})
+    return Response(serializer.data)
+</code></pre>
+
+        <h4>Create Product</h4>
+        <p>The <code>createProduct</code> view handles the creation of new products.</p>
+        <pre><code class="language-python">from rest_framework.decorators import api_view, permission_classes, parser_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.response import Response
+from rest_framework import status
+from .serializers import ProductSerializer
+from .models import Product
+from .decorators import has_role
+
+@api_view(['POST'])
+@has_role(['admin', 'editor'])
+@permission_classes([IsAuthenticated])
+@parser_classes([MultiPartParser, FormParser])
+def createProduct(request):
+    serializer = ProductSerializer(data=request.data)
+    if serializer.is_valid():
+        instance = serializer.save()
+        return Response(ProductSerializer(instance).data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+</code></pre>
+
+        <h4>Delete Product</h4>
+        <p>The <code>deleteProduct</code> view handles the deletion of a product by its primary key.</p>
+        <pre><code class="language-python">from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework import status
+from .models import Product
+from .decorators import has_role
+
+@api_view(['DELETE'])
+@has_role(['admin', 'editor'])
+@permission_classes([IsAuthenticated])
+def deleteProduct(request, pk):
+    try:
+        product = Product.objects.get(pk=pk)
+    except Product.DoesNotExist:
+        return Response({'error': 'Product not found'}, status=status.HTTP_404_NOT_FOUND)
+    product.delete()
+    return Response({'success': 'Product deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
+</code></pre>
+
+        <h4>Restore Product</h4>
+        <p>The <code>restoreProduct</code> view handles the restoration of a deleted product by its primary key.</p>
+        <pre><code class="language-python">from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework import status
+from .models import DeletedProduct, Product
+from .decorators import has_role
+
+@api_view(['POST'])
+@has_role(['admin', 'editor'])
+@permission_classes([IsAuthenticated])
+def restoreProduct(request, pk):
+    try:
+        deleted_product = DeletedProduct.objects.get(pk=pk)
+    except DeletedProduct.DoesNotExist:
+        return Response({'error': 'Deleted product not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    product = Product(
+        id=deleted_product.original_id,
+        name=deleted_product.name,
+        description=deleted_product.description,
+        price=deleted_product.price,
+        quantity=deleted_product.quantity,
+        category=deleted_product.category,
+        photo=deleted_product.photo
+    )
+    product.save()
+    deleted_product.delete()
+
+    return Response({'success': 'Product restored successfully'}, status=status.HTTP_200_OK)
+</code></pre>
+
+        <h4>List Deleted Products</h4>
+        <p>The <code>listDeletedProducts</code> view returns a list of all deleted products.</p>
+        <pre><code class="language-python">from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from .serializers import DeletedProductSerializer
+from .models import DeletedProduct
+from .decorators import has_role
+
+@api_view(['GET'])
+@has_role(['admin', 'editor'])
+@permission_classes([IsAuthenticated])
+def listDeletedProducts(request):
+    deleted_products = DeletedProduct.objects.all()
+    serializer = DeletedProductSerializer(deleted_products, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+</code></pre>
+
+        <h4>Update Product</h4>
+        <p>The <code>updateProduct</code> view handles the update of a product by its primary key.</p>
+        <pre><code class="language-python">from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework import status
+from .serializers import ProductSerializer
+from .models import Product
+from .decorators import has_role
+
+@api_view(['PUT'])
+@has_role(['admin', 'editor'])
+@permission_classes([IsAuthenticated])
+def updateProduct(request, pk):
+    try:
+        product = Product.objects.get(pk=pk)
+    except Product.DoesNotExist:
+        return Response({'error': 'Product not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    serializer = ProductSerializer(product, data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+</code></pre>
+
+        <h3>Category Views</h3>
+        <p>The following views handle various operations related to categories, such as listing, creating, deleting, and updating categories. They are protected by authentication and role-based access control.</p>
+
+        <h4>List All Categories</h4>
+        <p>The <code>allCategory</code> view returns a list of all categories in the database.</p>
+        <pre><code class="language-python">from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from .serializers import CategorySerializer
+from .models import Category
+from .decorators import has_role
+
+@api_view(['GET'])
+@has_role(['admin', 'editor'])
+@permission_classes([IsAuthenticated])
+def allCategory(request):
+    categories = Category.objects.all()
+    serializer = CategorySerializer(categories, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+</code></pre>
+
+        <h4>Create Category</h4>
+        <p>The <code>createCategory</code> view handles the creation of new categories.</p>
+        <pre><code class="language-python">from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework import status
+from .serializers import CategorySerializer
+from .models import Category
+from .decorators import has_role
+
+@api_view(['POST'])
+@has_role(['admin', 'editor'])
+@permission_classes([IsAuthenticated])
+def createCategory(request):
+    serializer = CategorySerializer(data=request.data)
+    if serializer.is_valid():
+        category = serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+</code></pre>
+
+    <h4>Delete Category</h4>
+<p>The <code>deleteCategory</code> view handles the deletion of a category by its primary key.</p>
+<pre><code class="language-python">from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework import status
+from .models import Category
+from .decorators import has_role
+
+@api_view(['DELETE'])
+@has_role(['admin', 'editor'])
+@permission_classes([IsAuthenticated])
+def deleteCategory(request, pk):
+    try:
+        category = Category.objects.get(pk=pk)
+    except Category.DoesNotExist:
+        return Response({'error': 'Category not found'}, status=status.HTTP_404_NOT_FOUND)
+    category.delete()
+    return Response({'success': 'Category deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
+</code></pre>
+        <h4>Update Category</h4>
+<p>The <code>updateCategory</code> view allows for updating a category's details by its primary key.</p>
+<pre><code class="language-python">from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework import status
+from .models import Category
+from .serializers import CategorySerializer
+from .decorators import has_role
+
+@api_view(['PUT'])
+@has_role(['admin', 'editor'])
+@permission_classes([IsAuthenticated])
+def updateCategory(request, pk):
+    try:
+        category = Category.objects.get(pk=pk)
+    except Category.DoesNotExist:
+        return Response({'error': 'Category not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    serializer = CategorySerializer(category, data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+</code></pre>

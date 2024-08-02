@@ -13,6 +13,11 @@ class ProductSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'description', 'price', 'quantity', 'photo', 'category']
 
 
+class DeletedProductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DeletedProduct
+        fields = '__all__'
+
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:

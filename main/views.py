@@ -79,6 +79,38 @@ def deleteProduct(request, pk):
     product.delete()
     return Response({'success': 'Product deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
 
+@api_view(['POST'])
+@has_role(['admin', 'editor'])
+@permission_classes([IsAuthenticated])
+def restoreProduct(request, pk):
+    try:
+        deleted_product = DeletedProduct.objects.get(pk=pk)
+    except DeletedProduct.DoesNotExist:
+        return Response({'error': 'Deleted product not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    product = Product(
+        id=deleted_product.original_id,
+        name=deleted_product.name,
+        description=deleted_product.description,
+        price=deleted_product.price,
+        quantity=deleted_product.quantity,
+        category=deleted_product.category,
+        photo=deleted_product.photo
+    )
+    product.save()
+    deleted_product.delete()
+
+    return Response({'success': 'Product restored successfully'}, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@has_role(['admin', 'editor'])
+@permission_classes([IsAuthenticated])
+def listDeletedProducts(request):
+    deleted_products = DeletedProduct.objects.all()
+    serializer = DeletedProductSerializer(deleted_products, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
 @api_view(['PUT'])
 @has_role(['admin', 'editor'])
 @permission_classes([IsAuthenticated])
